@@ -1,13 +1,18 @@
+"use client";
 import Image from "next/image";
+import { useCart } from "@/hooks/useCart";
 
 export type Product = {
+  id: string;
   name: string;
-  description: string;
-  price: string;
+  ingredients: string; // description → ingredients
   image: string;
+  price: number; // string → number
 };
 
 export function ProductCard({ product }: { product: Product }) {
+  const { addToCart } = useCart();
+
   return (
     <article className="flex flex-col gap-5 rounded-[20px] bg-white p-4">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
@@ -21,9 +26,15 @@ export function ProductCard({ product }: { product: Product }) {
         <button
           type="button"
           aria-label={`Add ${product.name} to cart`}
+          onClick={() => addToCart(product.id)} // ← нэмэх
           className="absolute right-5 bottom-5 flex size-11 items-center justify-center rounded-full bg-white text-accent-soft shadow-sm transition hover:scale-105"
         >
-          <svg viewBox="0 0 16 16" fill="none" className="size-4" aria-hidden="true">
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            className="size-4"
+            aria-hidden="true"
+          >
             <path
               d="M8 3v10M3 8h10"
               stroke="currentColor"
@@ -40,11 +51,11 @@ export function ProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
           <span className="text-[18px] font-semibold leading-7 text-foreground">
-            {product.price}
+            ${product.price.toFixed(2)}
           </span>
         </div>
         <p className="text-sm leading-5 text-foreground">
-          {product.description}
+          {product.ingredients}
         </p>
       </div>
     </article>

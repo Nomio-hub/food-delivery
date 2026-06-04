@@ -93,9 +93,100 @@ export const GET = async (req: NextRequest) => {
 
   if (claimable && !userCart) {
     return NextResponse.json(
-      claimable.userId === userId ? claimable : await claimCart(claimable.id, userId),
+      claimable.userId === userId
+        ? claimable
+        : await claimCart(claimable.id, userId),
     );
   }
 
   return NextResponse.json(userCart ?? (await createCart(userId)));
+};
+export const PATCH = async (req: NextRequest) => {
+  let userId: string | null;
+  try {
+    userId = getUserIdFromAuth(req.headers.get("authorization"));
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+    throw e;
+  }
+
+  const { foodId, deleteAll } = await req.json();
+  const cartToken = req.headers.get("x-cart-token");
+
+  // cart олох
+  let cart;
+  if (userId) {
+    cart = await findCartByUserId(userId);
+  } else {
+    cart = cartToken ? await findCartByToken(cartToken) : null;
+  }
+
+  if (!cart) {
+    return NextResponse.json({ message: "Cart not found" }, { status: 404 });
+  }
+
+  if (deleteAll) {
+    await prisma.cartFood.delete({
+      where: { foodId_cartId: { foodId, cartId: cart.id } },
+    });
+  } else {
+    const item = await prisma.cartFood.findUnique({
+      where: { foodId_cartId: { foodId, cartId: cart.id } },
+    });
+    if (item && item.quantity > 1) {
+      await prisma.cartFood.update({
+        where: { foodId_cartId: { foodId, cartId: cart.id } },
+        data: { quantity: { decrement: 1 } },
+      });
+    } else {
+      await prisma.cartFood.delete({
+        where: { foodId_cartId: { foodId, cartId: cart.id } },
+      });
+    }
+  }
+
+  return NextResponse.json(
+    await prisma.cart.findUnique({
+      where: { id: cart.id },
+      include: cartInclude,
+    }),
+  );
+};
+export const POST = async (req: NextRequest) => {
+  let userId: string | null;
+  try {
+    userId = getUserIdFromAuth(req.headers.get("authorization"));
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+    throw e;
+  }
+
+  const { foodId, quantity = 1 } = await req.json();
+  const cartToken = req.headers.get("x-cart-token");
+
+  let cart;
+  if (userId) {
+    cart = (await findCartByUserId(userId)) ?? (await createCart(userId));
+  } else {
+    cart =
+      (cartToken ? await findCartByToken(cartToken) : null) ??
+      (await createCart());
+  }
+
+  await prisma.cartFood.upsert({
+    where: { foodId_cartId: { foodId, cartId: cart.id } },
+    create: { foodId, cartId: cart.id, quantity },
+    update: { quantity: { increment: quantity } },
+  });
+
+  return NextResponse.json(
+    await prisma.cart.findUnique({
+      where: { id: cart.id },
+      include: cartInclude,
+    }),
+  );
 };
