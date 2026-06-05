@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Truck } from "lucide-react";
+import { LayoutGrid, Truck, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -17,7 +17,12 @@ export function AdminSidebar() {
     <aside className="fixed inset-y-0 left-0 z-10 flex w-51.25 flex-col gap-10 bg-background px-5 py-9">
       <Link href="/admin" className="flex items-center gap-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/hero/logo.svg" alt="" aria-hidden="true" className="size-10" />
+        <img
+          src="/hero/logo.svg"
+          alt=""
+          aria-hidden="true"
+          className="size-10"
+        />
         <div className="flex flex-col leading-none">
           <span className="text-[18px] font-semibold leading-7 tracking-tight text-foreground">
             NomNom
@@ -48,6 +53,17 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+
+      {/* Home руу буцах */}
+      <div className="mt-auto">
+        <Link
+          href="/"
+          className="flex h-10 items-center gap-2.5 rounded-full px-6 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          <span>Back to home</span>
+        </Link>
+      </div>
     </aside>
   );
 }

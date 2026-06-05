@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 const JWT_SECRET = "My-JWT-Secret";
 
-// POST /api/auth — login (email + password)
+// POST /api/auth/signup — бүртгэл
 export const POST = async (req: NextRequest) => {
   const { email, password } = await req.json();
 
@@ -16,22 +16,26 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (!user || !user.password) {
+  if (password.length < 6) {
     return NextResponse.json(
-      { message: "Хэрэглэгч олдсонгүй" },
-      { status: 404 },
+      { message: "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой" },
+      { status: 400 },
     );
   }
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
     return NextResponse.json(
-      { message: "Нууц үг буруу байна" },
-      { status: 401 },
+      { message: "Энэ имэйл бүртгэлтэй байна" },
+      { status: 400 },
     );
   }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const user = await prisma.user.create({
+    data: { email, password: hashedPassword },
+  });
 
   const accessToken = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
@@ -39,5 +43,5 @@ export const POST = async (req: NextRequest) => {
     { expiresIn: "7d" },
   );
 
-  return NextResponse.json({ message: "Success!", accessToken });
+  return NextResponse.json({ message: "Бүртгэл амжилттай!", accessToken });
 };

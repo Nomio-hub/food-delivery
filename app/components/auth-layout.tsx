@@ -18,7 +18,12 @@ export function AuthLayout({
             aria-label="Back"
             className="flex size-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-foreground transition hover:bg-zinc-50"
           >
-            <svg viewBox="0 0 16 16" fill="none" className="size-4" aria-hidden="true">
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              className="size-4"
+              aria-hidden="true"
+            >
               <path
                 d="m10 4-4 4 4 4"
                 stroke="currentColor"

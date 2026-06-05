@@ -27,7 +27,7 @@ export function Menu() {
   }, []);
 
   return (
-    <section className="bg-primary">
+    <section className="bg-[#404040]">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-14 px-6 py-14 sm:px-12 lg:px-[88px]">
         {sections.map((section) => (
           <div key={section.id} className="flex flex-col gap-6">

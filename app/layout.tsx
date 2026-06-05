@@ -3,8 +3,10 @@ import { Bebas_Neue, Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "./user-provider";
 import { cn } from "@/lib/utils";
+import { CartProvider } from "@/hooks/useCart";
+import { Toaster } from "sonner";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,10 +30,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", inter.variable, bebas.variable, "font-sans", geist.variable)}>
+    <html
+      lang="en"
+      className={cn(
+        "h-full",
+        "antialiased",
+        inter.variable,
+        bebas.variable,
+        "font-sans",
+        geist.variable,
+      )}
+    >
       <body className="min-h-full flex flex-col font-sans">
-        {children}
+        <CartProvider>{children}</CartProvider>
         <UserProvider />
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

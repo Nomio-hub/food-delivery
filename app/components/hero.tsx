@@ -2,12 +2,20 @@ import Image from "next/image";
 
 export function Hero() {
   return (
-    <section className="relative isolate w-full overflow-hidden bg-cream">
+    <section
+      className="relative isolate w-full overflow-hidden"
+      style={{
+        backgroundImage: "url('/hero/back.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <BackgroundTagline />
 
       <div className="relative mx-auto h-[480px] max-w-[1440px] sm:h-[540px] lg:h-[570px]">
         {/* Layered dark/orange pill background */}
-        <div className="pointer-events-none absolute inset-x-[-100px] top-[28%] h-[62%] rounded-[9999px] bg-accent" />
+        <div className="pointer-events-none absolute inset-x-[-100px] top-[28%] h-[62%] rounded-[9999px] bg-[#FD543F]" />
         <div className="pointer-events-none absolute inset-x-[-160px] top-[24%] h-[62%] rounded-[9999px] bg-primary" />
 
         {/* Glow ellipse behind the dish */}
@@ -29,7 +37,7 @@ export function Hero() {
             <span className="block translate-x-[18px] translate-y-[8px] rounded-full bg-cream px-5 py-2.5 font-display text-[24px] uppercase tracking-wide text-primary sm:text-[32px] lg:text-[40px]">
               Steak Society
             </span>
-            <span className="absolute left-0 top-0 block rounded-full bg-accent px-5 py-2.5 font-display text-[24px] uppercase tracking-wide text-white sm:text-[32px] lg:text-[40px]">
+            <span className="absolute left-0 top-0 block rounded-full bg-[#FD543F] px-5 py-2.5 font-display text-[24px] uppercase tracking-wide text-white sm:text-[32px] lg:text-[40px]">
               Steak Society
             </span>
           </div>

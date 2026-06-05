@@ -1,15 +1,31 @@
 "use client";
 
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import axios from "axios";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FoodCategoryWithFoods } from "./page";
+import { toast } from "sonner";
 
 export const FoodCreateDialog = ({
   open,
@@ -38,16 +54,18 @@ export const FoodCreateDialog = ({
         ingredients,
         foodCategoryId,
       })
-      .then((res) => {
-        alert("Food added");
+      .then(() => {
+        toast.success("Хоол амжилттай нэмэгдлээ", { duration: 10000 });
         setLoading(false);
         onClose();
         window.location.reload();
       })
       .catch(({ response }) => {
-        alert("Aldaa");
+        toast.error("Алдаа гарлаа", { duration: 10000 });
+        setLoading(false);
       });
   };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-sm">
@@ -62,9 +80,7 @@ export const FoodCreateDialog = ({
               name="name"
               placeholder="Pizza..."
               value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-              }}
+              onChange={(e) => setName(e.target.value)}
             />
           </Field>
           <Field>
@@ -94,9 +110,7 @@ export const FoodCreateDialog = ({
               type="number"
               value={price}
               onChange={(e) => {
-                if (Number(e.target.value)) {
-                  setPrice(Number(e.target.value));
-                }
+                if (Number(e.target.value)) setPrice(Number(e.target.value));
               }}
             />
           </Field>
@@ -107,9 +121,7 @@ export const FoodCreateDialog = ({
               name="ingredients"
               placeholder="Tomato, Cabbage, Cheese...."
               value={ingredients}
-              onChange={(e) => {
-                setIngredients(e.target.value);
-              }}
+              onChange={(e) => setIngredients(e.target.value)}
             />
           </Field>
           <Field>
@@ -120,13 +132,18 @@ export const FoodCreateDialog = ({
                 if (e.target.files && e.target.files.length > 0) {
                   const form = new FormData();
                   form.append("file", e.target.files[0]);
-                  axios.put("/api/upload", form).then((res) => {
-                    setImage(res.data.url);
-                  });
+                  axios
+                    .put("/api/upload", form)
+                    .then((res) => setImage(res.data.url))
+                    .catch(() =>
+                      toast.error("Зураг upload хийхэд алдаа гарлаа"),
+                    );
                 }
               }}
             />
-            {image && <img src={image} alt={name} className="max-w-full h-auto" />}
+            {image && (
+              <img src={image} alt={name} className="max-w-full h-auto" />
+            )}
           </Field>
         </FieldGroup>
         <DialogFooter>

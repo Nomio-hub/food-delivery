@@ -17,9 +17,16 @@ enum UserRole {
   ADMIN
 }
 
+enum FoodOrderStatus {
+  PENDING
+  CANCELED
+  DELIVERED
+}
+
 model User {
   id          String   @id @default(nanoid())
   email       String   @unique
+  password    String?
   phoneNumber String?
   address     String?
   otp         String?
@@ -28,6 +35,7 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   carts       Cart[]
+  foodOrders  FoodOrder[] 
 }
 
 model FoodCategory {
@@ -49,6 +57,7 @@ model Food {
   updatedAt      DateTime     @updatedAt
   foodCategoryId String
   cartFoods      CartFood[]
+  foodOrderItems FoodOrderItem[]
 }
 
 model Cart {
@@ -69,4 +78,25 @@ model CartFood {
   cartId   String
 
   @@id([foodId, cartId])
+}
+
+model FoodOrderItem {
+  id       String @id @default(cuid())
+  food     Food   @relation(fields: [foodId], references: [id])
+  foodId   String
+  quantity Int
+  order    FoodOrder @relation(fields: [orderId], references: [id])
+  orderId  String
+}
+
+model FoodOrder {
+  id             String          @id @default(cuid()) @map("_id")
+  user           User            @relation(fields: [userId], references: [id])
+  userId         String
+  totalPrice     Float
+  foodOrderItems FoodOrderItem[]
+  status         FoodOrderStatus @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  address  String
 }

@@ -1,19 +1,27 @@
 "use client";
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+  createElement,
+} from "react";
 import axios from "axios";
 import { useUser } from "@/app/user-provider";
 
 const CART_TOKEN_KEY = "cart-token";
 
-export function useCart() {
+function useCartCore() {
   const { accessToken } = useUser();
   const [cart, setCart] = useState<any>(null);
 
+  // accessToken өөрчлөгдөх бүрт getHeaders шинэчлэгдэнэ
   const getHeaders = () => ({
     ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-    ...(localStorage.getItem(CART_TOKEN_KEY) && {
-      "x-cart-token": localStorage.getItem(CART_TOKEN_KEY),
-    }),
+    ...(typeof window !== "undefined" && localStorage.getItem(CART_TOKEN_KEY)
+      ? { "x-cart-token": localStorage.getItem(CART_TOKEN_KEY) }
+      : {}),
   });
 
   useEffect(() => {
@@ -21,7 +29,7 @@ export function useCart() {
       setCart(res.data);
       if (res.data.token) localStorage.setItem(CART_TOKEN_KEY, res.data.token);
     });
-  }, [accessToken]);
+  }, [accessToken]); // ← accessToken өөрчлөгдөхөд cart дахин татна
 
   const addToCart = async (foodId: string) => {
     const res = await axios.post(
@@ -47,4 +55,18 @@ export function useCart() {
     0;
 
   return { cart, addToCart, removeFromCart, itemCount };
+}
+
+type CartValue = ReturnType<typeof useCartCore>;
+const CartContext = createContext<CartValue | null>(null);
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const value = useCartCore();
+  return createElement(CartContext.Provider, { value }, children);
+}
+
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used inside <CartProvider>");
+  return ctx;
 }
