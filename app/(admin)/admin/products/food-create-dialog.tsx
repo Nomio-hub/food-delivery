@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FoodCategoryWithFoods } from "./page";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const FoodCreateDialog = ({
   open,
@@ -43,6 +44,7 @@ export const FoodCreateDialog = ({
   const [ingredients, setIngredients] = useState("");
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleOnSubmit = () => {
     setLoading(true);
@@ -55,13 +57,16 @@ export const FoodCreateDialog = ({
         foodCategoryId,
       })
       .then(() => {
-        toast.success("Хоол амжилттай нэмэгдлээ", { duration: 10000 });
+        toast.success("Хоол амжилттай нэмэгдлээ");
         setLoading(false);
         onClose();
-        window.location.reload();
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // 2000ms = 2 секунд
       })
       .catch(({ response }) => {
-        toast.error("Алдаа гарлаа", { duration: 10000 });
+        toast.error(response?.data?.message || "Алдаа гарлаа");
         setLoading(false);
       });
   };

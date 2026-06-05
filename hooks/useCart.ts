@@ -7,54 +7,91 @@ import {
   ReactNode,
   createElement,
 } from "react";
-import axios from "axios";
-import { useUser } from "@/app/user-provider";
 
-const CART_TOKEN_KEY = "cart-token";
+const CART_KEY = "cart";
+
+type CartFood = {
+  foodId: string;
+  quantity: number;
+  price: number;
+  name: string;
+  image: string;
+  ingredients?: string;
+};
+
+type Cart = {
+  cartFoods: CartFood[];
+};
 
 function useCartCore() {
-  const { accessToken } = useUser();
-  const [cart, setCart] = useState<any>(null);
-
-  // accessToken өөрчлөгдөх бүрт getHeaders шинэчлэгдэнэ
-  const getHeaders = () => ({
-    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-    ...(typeof window !== "undefined" && localStorage.getItem(CART_TOKEN_KEY)
-      ? { "x-cart-token": localStorage.getItem(CART_TOKEN_KEY) }
-      : {}),
-  });
+  const [cart, setCart] = useState<Cart>({ cartFoods: [] });
 
   useEffect(() => {
-    axios.get("/api/cart", { headers: getHeaders() }).then((res) => {
-      setCart(res.data);
-      if (res.data.token) localStorage.setItem(CART_TOKEN_KEY, res.data.token);
+    const stored = localStorage.getItem(CART_KEY);
+    if (stored) setCart(JSON.parse(stored));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (
+    foodId: string,
+    meta?: { price: number; name: string; image: string; ingredients?: string },
+    quantity: number = 1,
+  ) => {
+    setCart((prev) => {
+      const existing = prev.cartFoods.find((cf) => cf.foodId === foodId);
+      if (existing) {
+        return {
+          cartFoods: prev.cartFoods.map((cf) =>
+            cf.foodId === foodId
+              ? { ...cf, quantity: cf.quantity + quantity }
+              : cf,
+          ),
+        };
+      }
+      return {
+        cartFoods: [
+          ...prev.cartFoods,
+          {
+            foodId,
+            quantity,
+            price: meta?.price ?? 0,
+            name: meta?.name ?? "",
+            image: meta?.image ?? "",
+            ingredients: meta?.ingredients ?? "",
+          },
+        ],
+      };
     });
-  }, [accessToken]); // ← accessToken өөрчлөгдөхөд cart дахин татна
-
-  const addToCart = async (foodId: string) => {
-    const res = await axios.post(
-      "/api/cart",
-      { foodId },
-      { headers: getHeaders() },
-    );
-    setCart(res.data);
-    if (res.data.token) localStorage.setItem(CART_TOKEN_KEY, res.data.token);
   };
 
-  const removeFromCart = async (foodId: string, deleteAll = false) => {
-    const res = await axios.patch(
-      "/api/cart",
-      { foodId, deleteAll },
-      { headers: getHeaders() },
-    );
-    setCart(res.data);
+  const removeFromCart = (foodId: string, deleteAll = false) => {
+    setCart((prev) => {
+      if (deleteAll) {
+        return {
+          cartFoods: prev.cartFoods.filter((cf) => cf.foodId !== foodId),
+        };
+      }
+      return {
+        cartFoods: prev.cartFoods
+          .map((cf) =>
+            cf.foodId === foodId ? { ...cf, quantity: cf.quantity - 1 } : cf,
+          )
+          .filter((cf) => cf.quantity > 0),
+      };
+    });
   };
 
-  const itemCount =
-    cart?.cartFoods?.reduce((sum: number, cf: any) => sum + cf.quantity, 0) ??
-    0;
+  const clearCart = () => {
+    setCart({ cartFoods: [] });
+    localStorage.removeItem(CART_KEY);
+  };
 
-  return { cart, addToCart, removeFromCart, itemCount };
+  const itemCount = cart.cartFoods.reduce((sum, cf) => sum + cf.quantity, 0);
+
+  return { cart, addToCart, removeFromCart, clearCart, itemCount };
 }
 
 type CartValue = ReturnType<typeof useCartCore>;

@@ -4,6 +4,7 @@ import { useUser } from "@/app/user-provider";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 
 export function CartSidebar({
   open,
@@ -12,7 +13,7 @@ export function CartSidebar({
   open: boolean;
   onClose: () => void;
 }) {
-  const { cart, addToCart, removeFromCart } = useCart();
+  const { cart, addToCart, removeFromCart, clearCart } = useCart();
   const { accessToken } = useUser();
 
   const [tab, setTab] = useState<"cart" | "order">("cart");
@@ -26,7 +27,6 @@ export function CartSidebar({
   const [orders, setOrders] = useState<any[]>([]);
   const [placing, setPlacing] = useState(false);
 
-  // Order tab нээгдэх бүрт захиалгын түүх татна
   useEffect(() => {
     if (tab === "order" && accessToken) {
       axios
@@ -42,7 +42,7 @@ export function CartSidebar({
 
   const items = cart?.cartFoods ?? [];
   const subtotal = items.reduce(
-    (sum: number, cf: any) => sum + cf.quantity * parseFloat(cf.food.price),
+    (sum: number, cf: any) => sum + cf.quantity * parseFloat(cf.price),
     0,
   );
   const shipping = items.length > 0 ? 0.99 : 0;
@@ -62,14 +62,23 @@ export function CartSidebar({
     try {
       const res = await axios.post(
         "/api/orders",
-        { address },
+        {
+          address,
+          items: items.map((cf: any) => ({
+            foodId: cf.foodId,
+            quantity: cf.quantity,
+            price: cf.price,
+          })),
+        },
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       setOrders((prev) => [res.data, ...prev]);
+      clearCart();
       setAddress("");
       setTab("order");
+      toast.success("Захиалга амжилттай өгөгдлөө");
     } catch {
-      alert("Захиалга өгөхөд алдаа гарлаа");
+      toast.error("Захиалга өгөхөд алдаа гарлаа");
     } finally {
       setPlacing(false);
     }
@@ -77,12 +86,9 @@ export function CartSidebar({
 
   return (
     <>
-      {/* Overlay */}
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
-      {/* Sidebar */}
       <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col bg-white shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
           <div className="flex items-center gap-2">
             <svg
@@ -125,31 +131,21 @@ export function CartSidebar({
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b">
           <button
             onClick={() => setTab("cart")}
-            className={`flex-1 py-2.5 text-sm font-semibold transition ${
-              tab === "cart"
-                ? "bg-accent-soft text-white"
-                : "text-zinc-500 hover:bg-zinc-50"
-            }`}
+            className={`flex-1 py-2.5 text-sm font-semibold transition ${tab === "cart" ? "bg-accent-soft text-white" : "text-zinc-500 hover:bg-zinc-50"}`}
           >
             Cart
           </button>
           <button
             onClick={() => setTab("order")}
-            className={`flex-1 py-2.5 text-sm font-semibold transition ${
-              tab === "order"
-                ? "bg-accent-soft text-white"
-                : "text-zinc-500 hover:bg-zinc-50"
-            }`}
+            className={`flex-1 py-2.5 text-sm font-semibold transition ${tab === "order" ? "bg-accent-soft text-white" : "text-zinc-500 hover:bg-zinc-50"}`}
           >
             Order
           </button>
         </div>
 
-        {/* ── CART TAB ── */}
         {tab === "cart" && (
           <>
             <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -168,18 +164,18 @@ export function CartSidebar({
                     >
                       <div className="relative size-16 flex-shrink-0 overflow-hidden rounded-xl">
                         <Image
-                          src={cf.food.image || "/placeholder.png"}
-                          alt={cf.food.name}
+                          src={cf.image || "/placeholder.png"}
+                          alt={cf.name || "Food image"}
                           fill
                           className="object-cover"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold leading-snug text-accent-soft">
-                          {cf.food.name}
+                          {cf.name}
                         </p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-zinc-400">
-                          {cf.food.ingredients}
+                          {cf.ingredients}
                         </p>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-2 rounded-full border px-2 py-0.5">
@@ -200,10 +196,7 @@ export function CartSidebar({
                             </button>
                           </div>
                           <span className="text-sm font-semibold text-zinc-800">
-                            $
-                            {(cf.quantity * parseFloat(cf.food.price)).toFixed(
-                              2,
-                            )}
+                            ${(cf.quantity * parseFloat(cf.price)).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -230,7 +223,6 @@ export function CartSidebar({
                 </div>
               )}
 
-              {/* Delivery location */}
               <div className="mt-5">
                 <p className="mb-2 text-sm font-medium text-zinc-700">
                   Delivery location
@@ -257,7 +249,6 @@ export function CartSidebar({
               </div>
             </div>
 
-            {/* Payment info + checkout */}
             <div className="border-t px-5 py-4">
               <p className="mb-3 text-sm font-semibold text-zinc-700">
                 Payment info
@@ -291,7 +282,6 @@ export function CartSidebar({
           </>
         )}
 
-        {/* ── ORDER TAB ── */}
         {tab === "order" && (
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <p className="mb-4 text-sm font-medium text-zinc-500">
@@ -350,7 +340,6 @@ export function CartSidebar({
         )}
       </div>
 
-      {/* Auth prompt modal */}
       {showAuthPrompt && (
         <>
           <div
@@ -376,13 +365,13 @@ export function CartSidebar({
             </p>
             <div className="mt-5 flex gap-3">
               <a
-                href="/sign-in"
+                href="/login"
                 className="flex-1 rounded-full bg-zinc-900 py-2.5 text-center text-sm font-semibold text-white hover:bg-zinc-700"
               >
                 Log in
               </a>
               <a
-                href="/sign-up"
+                href="/signup"
                 className="flex-1 rounded-full border py-2.5 text-center text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 Sign up

@@ -21,33 +21,27 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { address } = await req.json();
+  const { address, items } = await req.json();
 
-  // Хэрэглэгчийн cart олох
-  const cart = await prisma.cart.findFirst({
-    where: { userId },
-    include: { cartFoods: { include: { food: true } } },
-  });
-
-  if (!cart || cart.cartFoods.length === 0) {
+  if (!items || items.length === 0) {
     return NextResponse.json({ message: "Cart is empty" }, { status: 400 });
   }
 
-  const totalPrice = cart.cartFoods.reduce(
-    (sum, cf) => sum + cf.quantity * cf.food.price,
+  const totalPrice = items.reduce(
+    (sum: number, item: { quantity: number; price: number }) =>
+      sum + item.quantity * item.price,
     0,
   );
 
-  // Захиалга үүсгэх
   const order = await prisma.foodOrder.create({
     data: {
       userId,
       totalPrice,
       address,
       foodOrderItems: {
-        create: cart.cartFoods.map((cf) => ({
-          foodId: cf.foodId,
-          quantity: cf.quantity,
+        create: items.map((item: { foodId: string; quantity: number }) => ({
+          foodId: item.foodId,
+          quantity: item.quantity,
         })),
       },
     },
@@ -55,9 +49,6 @@ export const POST = async (req: NextRequest) => {
       foodOrderItems: { include: { food: true } },
     },
   });
-
-  // Cart-г хоослох
-  await prisma.cartFood.deleteMany({ where: { cartId: cart.id } });
 
   return NextResponse.json(order);
 };

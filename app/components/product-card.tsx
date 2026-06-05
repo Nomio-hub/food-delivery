@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 
 export type Product = {
   id: string;
@@ -16,17 +17,24 @@ export function ProductCard({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState(1);
 
-  const handleAddToCart = async () => {
-    for (let i = 0; i < qty; i++) {
-      await addToCart(product.id);
-    }
+  const handleAddToCart = () => {
+    addToCart(
+      product.id,
+      {
+        price: product.price,
+        name: product.name,
+        image: product.image,
+        ingredients: product.ingredients,
+      },
+      qty,
+    );
+    toast.success("Сагсанд нэмэгдлээ");
     setOpen(false);
     setQty(1);
   };
 
   return (
     <>
-      {/* Card */}
       <article
         className="flex flex-col gap-5 rounded-[20px] bg-white p-4 cursor-pointer"
         onClick={() => setOpen(true)}
@@ -78,10 +86,8 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       </article>
 
-      {/* Modal */}
       {open && (
         <>
-          {/* Overlay */}
           <div
             className="fixed inset-0 z-40 bg-black/40"
             onClick={() => {
@@ -89,10 +95,7 @@ export function ProductCard({ product }: { product: Product }) {
               setQty(1);
             }}
           />
-
-          {/* Dialog */}
           <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* Close */}
             <button
               onClick={() => {
                 setOpen(false);
@@ -116,7 +119,6 @@ export function ProductCard({ product }: { product: Product }) {
               </svg>
             </button>
 
-            {/* Image */}
             <div className="relative h-56 w-full">
               <Image
                 src={product.image || "/p1.png"}
@@ -126,7 +128,6 @@ export function ProductCard({ product }: { product: Product }) {
               />
             </div>
 
-            {/* Content */}
             <div className="p-6">
               <h2 className="text-2xl font-bold text-accent-soft">
                 {product.name}
@@ -144,7 +145,6 @@ export function ProductCard({ product }: { product: Product }) {
                 </span>
               </div>
 
-              {/* Quantity */}
               <div className="mt-3 flex items-center justify-end gap-4">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -164,7 +164,6 @@ export function ProductCard({ product }: { product: Product }) {
                 </button>
               </div>
 
-              {/* Add to cart */}
               <button
                 onClick={handleAddToCart}
                 className="mt-5 w-full rounded-full bg-zinc-900 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-95"
